@@ -1,6 +1,6 @@
-// build.gradle.kts (Project level)
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
-    // ... other plugins
-    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21" apply false
-    alias(libs.plugins.kotlin.compose) apply false
+    id("com.android.application") version "8.2.0" apply false // Or the latest stable version
+    id("com.android.library") version "8.2.0" apply false // If you have library modules
+    id("org.jetbrains.kotlin.android") version "1.9.0" apply false // Or your Kotlin version
 }
