@@ -1,9 +1,7 @@
 package com.example.dailymileageapp
 
-import android.R.attr.id
-
 // Make sure this matches your package name
-
+// REMOVED: import android.R.attr.id
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

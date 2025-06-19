@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "DailyMileage" // Replace with your actual project name
-include("com.example.dailymileageapp") // Or your module name
+rootProject.name = "DailyMileage"
+include(":app") // Corrected: This includes the module located in the 'app' directory

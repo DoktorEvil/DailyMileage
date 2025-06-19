@@ -1,6 +1,18 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
-    id("com.android.application") version "8.2.0" apply false // Or the latest stable version
-    id("com.android.library") version "8.2.0" apply false // If you have library modules
-    id("org.jetbrains.kotlin.android") version "1.9.0" apply false // Or your Kotlin version
-}
+    // Reference the Android Application plugin alias from the version catalog
+    alias(libs.plugins.android.application) apply false
+
+    // Reference the Kotlin Android plugin alias from the version catalog
+    alias(libs.plugins.kotlin.android) apply false
+
+    // Declare the Kotlin Compose plugin alias from the version catalog, making it available to modules
+    alias(libs.plugins.kotlin.compose) apply false
+
+// If you have library modules in your project (besides ':app'),
+// you would also need to define 'com.android.library' in your libs.versions.toml
+// and add its alias here. For example:
+// alias(libs.plugins.android.library) apply false // Example if you had a library module
+} // Make sure this closing brace for the plugins block is present
+
+// Any other configurations for the root project can go here
