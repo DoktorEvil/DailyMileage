@@ -1,15 +1,15 @@
-package com.example.dailymileageapp.ui.theme // Match your package
+package com.example.dailymileageapp.ui.theme
 
-import androidx.compose.material3.Typography
+import androidx.compose.material3.Typography // Importing the Material 3 Typography class
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Replace with your own font assets if you have them
-val AppFontFamily = FontFamily.Default // Or your custom font family
+val AppFontFamily = FontFamily.Default
 
-val Typography = Typography(
+// Rename your instance to something like AppTypography or MyTypography
+val AppTypography = Typography( // Now this 'Typography' refers to the imported class constructor
     bodyLarge = TextStyle(
         fontFamily = AppFontFamily,
         fontWeight = FontWeight.Normal,
@@ -31,13 +31,5 @@ val Typography = Typography(
         lineHeight = 28.sp,
         letterSpacing = 0.sp
     )
-    /* Other default text styles to override like
-    labelSmall = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
-    )
-    */
+    // ... other text styles
 )
