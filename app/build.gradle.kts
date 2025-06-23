@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.kotlin.serialization) // Applied again using alias()
 }
 
 android {
@@ -61,6 +62,10 @@ dependencies {
     // Other core dependencies you'll likely need
     implementation("androidx.core:core-ktx:1.12.0") // Or latest
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2") // Or latest
+    implementation("androidx.datastore:datastore-preferences:1.1.1") // Or the latest version
+
+    // For JSON serialization (if you choose to store a list as JSON)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3") // Or latest
 
     // Testing dependencies
     testImplementation("junit:junit:4.13.2")
