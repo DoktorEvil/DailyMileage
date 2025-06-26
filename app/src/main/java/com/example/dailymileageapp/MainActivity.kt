@@ -1,27 +1,38 @@
-package com.example.dailymileageapp
-
-// Make sure this matches your package name
-// REMOVED: import android.R.attr.id
+package com.example.dailymileageapp // Ensure this package matches your project structure
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.dailymileageapp.ui.theme.DailyMileageAppTheme // You might need to adjust this import based on your theme name
+import com.example.dailymileageapp.ui.theme.DailyMileageAppTheme
+import kotlinx.coroutines.launch
+import kotlin.collections.addAll
+import kotlin.collections.forEachIndexed
+import kotlin.collections.isNotEmpty
+import kotlin.collections.sumOf
+import kotlin.collections.toMutableList
+
+// import kotlinx.serialization.Serializable // Removed if DailyMileage was the only class using it here
+
+// DailyMileage data class has been moved to its own file: DailyMileage.kt
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            DailyMileageAppTheme { // This applies your app's theme
+            DailyMileageAppTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -33,63 +44,83 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// Data class to hold mileage information for a day
-data class DailyMileage(val dayName: String, var mileage: String = "")
-
+@OptIn(ExperimentalMaterial3Api::class) // For Material 3 components like TopAppBar
 @Composable
 fun MileageTrackerScreen() {
-    // List of days
-    val daysOfWeek = listOf(
-        "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
-    )
+    val context = LocalContext.current
+    val dataStore = remember { MileageDataStore(context) } // MileageDataStore is in its own file
+    val coroutineScope = rememberCoroutineScope()
 
-    // State to hold the mileage for each day.
-    // We use remember to keep the state across recompositions.
-    // `mutableStateListOf` is good for lists where items themselves might change.
-    val dailyMileages = remember {
-        mutableStateListOf<DailyMileage>().apply {
-            daysOfWeek.forEach { add(DailyMileage(it)) }
-        }
+    // Explicitly type dailyMileagesState
+    // DailyMileage is now resolved from its own file in the same package
+    val dailyMileagesState: State<List<DailyMileage>> =
+        dataStore.dailyMileageFlow.collectAsState(initial = dataStore.getDefaultMileageList())
+
+    val dailyMileages = remember { mutableStateListOf<DailyMileage>() }
+
+    LaunchedEffect(dailyMileagesState.value) {
+        dailyMileages.clear()
+        dailyMileages.addAll(dailyMileagesState.value)
     }
 
-    // Calculate total mileage
     val totalMileage = dailyMileages.sumOf { it.mileage.toDoubleOrNull() ?: 0.0 }
 
-    Column(
-        modifier = Modifier
-            .padding(16.dp)
-            .fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Daily Mileage Tracker",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-
-        // Create a row for each day with a label and an input field
-        dailyMileages.forEachIndexed { index, dailyEntry ->
-            MileageInputRow(
-                dayName = dailyEntry.dayName,
-                mileage = dailyEntry.mileage,
-                onMileageChange = { newMileage ->
-                    // Update the mileage in our state list
-                    // Important: To trigger recomposition for mutableStateListOf when an item's property changes,
-                    // you need to replace the item or ensure the list itself is observed for such changes.
-                    // For simplicity here, we're creating a new list if an item is modified.
-                    // A more optimized way for complex objects in a list might involve making DailyMileage.mileage a MutableState.
-                    dailyMileages[index] = dailyMileages[index].copy(mileage = newMileage)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Daily Mileage Tracker") },
+                actions = {
+                    IconButton(onClick = {
+                        coroutineScope.launch {
+                            dataStore.clearMileageData()
+                        }
+                    }) {
+                        Icon(Icons.Filled.Refresh, contentDescription = "Clear Data")
+                    }
                 }
             )
-            Spacer(modifier = Modifier.height(8.dp))
         }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .padding(16.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (dailyMileages.isNotEmpty() || dailyMileagesState.value.isEmpty()) {
+                dailyMileages.forEachIndexed { index, dailyEntry ->
+                    if (index < dailyMileages.size) { // Defensive check
+                        MileageInputRow(
+                            dayName = dailyEntry.dayName,
+                            mileage = dailyEntry.mileage,
+                            onMileageChange = { newMileage ->
+                                val updatedList = dailyMileages.toMutableList().apply {
+                                    this[index] = this[index].copy(mileage = newMileage)
+                                }
+                                dailyMileages.clear()
+                                dailyMileages.addAll(updatedList)
 
-        Spacer(modifier = Modifier.height(24.dp))
+                                coroutineScope.launch {
+                                    dataStore.saveMileageList(updatedList)
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            } else if (dailyMileagesState.value.isNotEmpty()) {
+                // Optional: Show a loading indicator or placeholder
+                // CircularProgressIndicator()
+            }
 
-        Text(
-            text = "Total Mileage: %.2f km".format(totalMileage),
-            style = MaterialTheme.typography.titleLarge
-        )
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Total Mileage: %.2f km".format(totalMileage),
+                style = MaterialTheme.typography.titleLarge
+            )
+        }
     }
 }
 
@@ -105,12 +136,11 @@ fun MileageInputRow(
     ) {
         Text(
             text = dayName,
-            modifier = Modifier.weight(1f) // Day name takes up available space
+            modifier = Modifier.weight(1f)
         )
         OutlinedTextField(
             value = mileage,
             onValueChange = { newValue ->
-                // Allow only numbers and a single decimal point
                 if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*\$"))) {
                     onMileageChange(newValue)
                 }
@@ -119,13 +149,12 @@ fun MileageInputRow(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
             modifier = Modifier
-                .weight(1f) // Input field also takes up space
+                .weight(1f)
                 .padding(start = 8.dp)
         )
     }
 }
 
-// Preview function to see your Composable in Android Studio's design view
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {

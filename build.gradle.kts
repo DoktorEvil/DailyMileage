@@ -8,6 +8,8 @@ plugins {
 
     // Declare the Kotlin Compose plugin alias from the version catalog, making it available to modules
     alias(libs.plugins.kotlin.compose) apply false
+    // This is to assist in enabling serialization to persist the data in the app
+    alias(libs.plugins.kotlin.serialization) apply false
 
 // If you have library modules in your project (besides ':app'),
 // you would also need to define 'com.android.library' in your libs.versions.toml
